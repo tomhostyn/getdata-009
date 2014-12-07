@@ -1,14 +1,15 @@
 library (dplyr)
 library(data.table)
 
-# You should create one R script called run_analysis.R that does the following. 
-# 1. Merges the training and the test sets to create one data set.
-# 2. Extracts only the measurements on the mean and standard deviation for each measurement. 
-# 3. Uses descriptive activity names to name the activities in the data set
-# 4. Appropriately labels the data set with descriptive variable names. 
-# 5. From the data set in step 4, creates a second, independent tidy data set with the average
-# of each variable for each activity and each subject.
-
+run_analysis <- function (){
+  #
+  #  write final data table to wd
+  #
+    
+  UCI_HAR_DT <- load_har_data_table()
+  MEAN_UCI_HAR_DT <- transform_har_data_table(UCI_HAR_DT)
+  write.table (MEAN_UCI_HAR_DT, paste (getwd(), sep="/", "mean_uci_har.txt"), row.name=FALSE)
+}
 
 load_har_data_table <- function(wd = getwd()){
 
@@ -60,6 +61,7 @@ load_har_data_table <- function(wd = getwd()){
   #
   #  keep only mean and std columns in X_train and X_test
   #
+  #  keep <- grep ("*mean*|*std*", features$V2) 
   keep <- grep ("*mean\\(\\)*|*std*", features$V2) 
   X_train <- select(X_train, keep)
   X_test <- select(X_test, keep)
@@ -81,7 +83,7 @@ load_har_data_table <- function(wd = getwd()){
   setkey(activities, ActivityID)
   setkey(har, ActivityID)
   har <- merge(har, activities)
-  select (DF, -ActivityID)
+  har <- select (har, -ActivityID)
   
   #
   # rename columns. remove brackets, -
@@ -97,29 +99,16 @@ load_har_data_table <- function(wd = getwd()){
 
 
 transform_har_data_table <- function (dt){
-    
-  #TO DO
-  # activities number should be replaced by activity classes
-  # make copy with averages
+  dt <- copy(dt)  
+  columns <- names (select (dt, -Subject, -Activity))
   
-#   dt <- copy(dt)
-#   
-#   
-#   dt <- copy(DT)
-#   
-#   dt[,tBodyAcc_mean_X_M:= mean(tBodyAcc_mean_X),by=Subject]
-#   
-#   
-#   
-#   dt %>% 
-#     group_by(Subject)
-#   
-#   dt <- copy(DT)
-#   dt <- group_by(dt, Subject)
-#   transform (dt, 
-#              tBodyAcc_mean_X_M = mean (tBodyAcc_mean_X)) 
-#     
-#   
-#        
-#     })
+  sapply(columns, function(col){
+    expr <- parse(text = paste0("m_", col, ":=mean(", col,")"))
+    dt[,eval(expr),by=Subject]
+  } )
+  
+  dt <- select (dt, -one_of(columns))
+
+  dt <- distinct (dt)
+  dt [order(Subject, Activity)]
 }
