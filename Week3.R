@@ -32,6 +32,14 @@ q4 <- function () {
  
   join <- left_join(GDP, EDSTATS, by = c("X" = "CountryCode"))
   mean(join [join$Income.Group=="High income: OECD", 2], na.rm=TRUE)
-  
+  warning ("wrong")
 }
 
+
+q5 <- function () {
+  GDP <- read.csv("getdata-data-GDP.csv", skip=4, nrows=190)
+  EDSTATS <- read.csv("getdata-data-EDSTATS_Country.csv")
+  join <- left_join(GDP, EDSTATS, by = c("X" = "CountryCode"))
+  quantile (join$X.1)
+  sum(join$X.1 <= 38 & join$Income.Group=="Lower middle income")
+}
